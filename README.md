@@ -1,4 +1,4 @@
-This repository contains a demo for a way to extract and summarize raster microclimate data within GPS trajectories.The method uses the terra package to extract the data within GPS trajectories, which are assumed to be sf polygons. Then I do some data wrangling to summarize the extracted measures weighted by the time and areal overlap of a buffer around the trajectories.
+This repository contains a demo for a way to extract and summarize raster microclimate data within GPS trajectories. I use the terra package to extract the data within a buffer around simulated GPS trajectories. The buffers are sf objects. Then, at the level of the line segment, I summarize the extracted measure weighted by how much its corresponding buffer overlaps the exposure's raster grid cell. Then I weight each line segment by its duration. In this case, all line segments are assumed to be a minute, so the time-weighting is not consequential, but the method allows that the duration between GPS pings might not always be the same.
 
 All data in this demo are either simulated (the GPS trajectories) or are publicly available (land-surface temperature from satellite imagery).
 
