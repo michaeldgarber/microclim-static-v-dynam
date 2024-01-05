@@ -1,6 +1,12 @@
 # Create buffers around trajectories----
 library(sf)
 library(tidyverse)
+
+#This script relies on
+#source(here("scripts", "demo","sim-trajectories.R"))
+
+traj_demo
+
 #Could simply do the following, but in my experience it's kind of slow
 st_crs(traj_demo) #check coordinate system. meters.
 #no_fun for without a function

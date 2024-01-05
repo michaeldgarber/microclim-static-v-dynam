@@ -368,19 +368,24 @@ imagery).</p>
 <p>The first script (<code>sim-trajectories.R)</code> simulates GPS
 trajectories for 3 study participants, with their simulated activity
 paths within San Diego County.</p>
-<p>The second (<code>read-lst-demo.R</code>) reads in land-surface
-temperature data. Microclimate data used for the demo are Terra MODIS
-Land Surface Temperature &amp; Emissivity (MOD11A2.061, 1000 m, 8-day)
-downloaded from the appEEARS platform. The data used for the demo are
-from June of 2023 for the San Diego area. These data are loaded in in
-the <code>read-lst-demo.R</code> script. The data are saved in this
+<p>The second script (<code>create-buffers-around-traj.R</code>) creates
+20 m buffers around those simulated GPS trajectories using the sf
+package.</p>
+<p>The third (<code>read-lst-demo.R</code>) reads in land-surface
+temperature data using the terra package. Microclimate data used for the
+demo are Terra MODIS Land Surface Temperature &amp; Emissivity
+(MOD11A2.061, 1000 m, 8-day) downloaded from the appEEARS platform. The
+specific data used in the demo is a satellite image taken on June 18,
+2023 for the San Diego area. These data are loaded into the R pipeline
+in the <code>read-lst-demo.R</code> script. The data are saved in this
 Dropbox folder:</p>
 <p><a href="https://www.dropbox.com/scl/fo/x144sgc6w11gmvx7ednw7/h?rlkey=y2mymmw4mtzzj1x6v35mnox4g&amp;dl=0" class="uri">https://www.dropbox.com/scl/fo/x144sgc6w11gmvx7ednw7/h?rlkey=y2mymmw4mtzzj1x6v35mnox4g&amp;dl=0</a></p>
-<p>And the third script (<code>measure-e-sim-traj.R</code>) extracts the
-the land-surface temperature information from within a buffer around the
-simulated GPS trajectories and summarizes the information.</p>
+<p>The final script (<code>extract-summarize-exposure.R</code>) extracts
+the land-surface temperature information from within the buffers around
+the simulated GPS trajectories and summarizes the information by study
+ID.</p>
 <p>The scripts can be run in the following order:</p>
-<p><code>{r} libray(here) source(here(&quot;scripts&quot;, &quot;demo&quot;,&quot;sim-trajectories.R&quot;))  source(here(&quot;scripts&quot;, &quot;demo&quot;,&quot;read-lst-demo.R&quot;))  source(here(&quot;scripts&quot;,&quot;demo&quot;,&quot;measure-e-sim-traj.R&quot;))</code></p>
+<p><code>{r} library(here) source(here(&quot;scripts&quot;, &quot;demo&quot;,&quot;sim-trajectories.R&quot;)) source(here(&quot;scripts&quot;, &quot;demo&quot;,&quot;create-buffers-around-traj.R&quot;)) source(here(&quot;scripts&quot;, &quot;demo&quot;,&quot;read-lst-demo.R&quot;)) source(here(&quot;scripts&quot;,&quot;demo&quot;,&quot;extract-summarize-exposure.R&quot;))</code></p>
 
 
 

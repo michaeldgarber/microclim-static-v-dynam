@@ -11,48 +11,14 @@ library(raster)
 library(tidyterra)
 
 traj_demo
-#Assess exposure in these trajectories
-#Use the existing data you have as a placeholder. Then load the data where
-#you know exactly how it was loaded.
+#Assess exposure in the buffers created in 
+#source(here("scripts", "demo","create-buffers-around-traj.R"))
 
-#First create buffers around the trajectories
+
+#traj_demo_buff %>% mapview(zcol="study_id")
 
 #Then extract the lst data within the buffer
 
-# Create buffers around trajectories----
-#Could simply do this, but in my experience it's kind of slow
-st_crs(traj_demo) #check coordinate system. meters.
-#no_fun for without a function
-traj_demo_buff_no_fun=traj_demo %>% 
-  st_buffer(200)
-
-
-#so use a function instead
-traj_demo_buff_fun = function(study_id_val){
-  traj_buff_200m_out = traj_demo %>%
-    dplyr::select(study_id, line_id, geometry) %>% 
-    filter(study_id==study_id_val) %>% 
-    st_buffer(200)
-}
-
-#This still takes a while. Test one of them
-traj_demo_buff_1=traj_demo_buff_fun(1)
-traj_demo_buff_1 %>% 
-  slice(1:100) %>% 
-  mapview()#worked
-
-#study id list created previously:
-study_id_list = gps_traces %>% 
-  group_by(study_id) %>% 
-  summarise(n=n()) %>% 
-  pull(study_id)
-
-#Run the function over all study IDs to create buffers around everyone's trajectory
-traj_demo_buff = study_id_list %>% 
-  map_dfr(traj_demo_buff_fun)
-
-#
-traj_demo_buff
 
 # Extract exposure data------
 ## Test on one study ID----
@@ -230,9 +196,9 @@ traj_extract_e_demo=function(study_id_val){
     mutate(prop_non_miss=sum_of_weights_no_miss/sum_weights_original)
   
   #and now we can continue
-  traj_extract_wrangle_test = traj_extract_e_test %>% 
+  traj_extract_wrangle_obj = traj_extract_e_obj %>% 
     #we are within study id so this works
-    left_join(traj_extract_e_weights_by_line_id_no_e_miss_test, by ="line_id") %>% 
+    left_join(traj_extract_e_weights_by_line_id_no_e_miss_obj, by ="line_id") %>% 
     #sum over line_id and calculate a weighted average exp for each line id,
     #weighted by the proportion the pixel is covered by the polygon
     mutate(
@@ -275,7 +241,7 @@ traj_extract_e_demo=function(study_id_val){
       lookup_duration_study_id_line_id_demo,
       by = c("study_id", "line_id")
       )    %>% 
-    left_join(traj_extract_prop_non_miss_test, by = "line_id") %>% 
+    left_join(traj_extract_prop_non_miss_obj, by = "line_id") %>% 
     mutate(
       t_elapsed_to_next_m_weight_non_miss=prop_non_miss*t_elapsed_to_next_m,
       e_times_elapsed_t = e*t_elapsed_to_next_m_weight_non_miss,
@@ -301,4 +267,73 @@ summary(traj_extract_wrangle_test_fun$e)
 traj_extract_df_demo = study_id_list %>% 
   map_dfr(traj_extract_e_demo)
 
-## Summarize over study IDs
+#checks
+traj_extract_df_demo
+n_distinct(traj_extract_df_demo$study_id)
+n_distinct(traj_extract_df_demo$line_id)
+names(traj_extract_df_demo)
+summary(traj_extract_df_demo$t_elapsed_to_next)
+summary(traj_extract_df_demo$t_elapsed_to_next_m)
+
+## Summarize by study ID---------
+traj_summary_s_id_demo=traj_extract_df_demo %>% 
+  group_by(study_id) %>% 
+  summarise(
+    #calculate max, min, sd in case needed.
+    #These won't be weighted by elapsed t the same way, 
+    #but still informative
+    e_sd = sd(e, na.rm=TRUE),
+    e_min = min(e, na.rm=TRUE),
+    #max of line segments, which is weighted avg of constituent pixels
+    e_max = max(e, na.rm=TRUE), 
+    e_med = median(e, na.rm=TRUE),
+    #prepare (intermediate calcs) for weighted mean, weighting by 
+    #elapsed time.
+    #Here, unlike above, I'm allowing missings to occur within a 
+    #given person.
+    #This will take the average (or sum) of all the non-missing values for 
+    #that person
+    #The alternative way would be to only calculate the sum if the 
+    #entire person's data
+    #was non-missing, but I think that's too strict.
+    
+    e_weighted_sum = sum(e_times_elapsed_t, na.rm = TRUE),
+    #just to have this for reference, the simple version of
+    t_elapsed_to_next_m = sum(t_elapsed_to_next_m, na.rm=TRUE),
+    t_elapsed_to_next_m_weight_non_miss=sum(t_elapsed_to_next_m_weight_non_miss,
+                                            na.rm=TRUE),
+    #and the version that excludes if the exposure value is missing.
+    #see above for definition of this.
+    sum_of_weights = sum(t_elapsed_to_next_miss, na.rm=TRUE),
+    #useful to keep track of this as well.
+    #the number of lines where exposure is missing. recall, above, this is true
+    #if ANY pixels on that line segment have missing information.
+    n_line_miss = sum(e_miss),
+    n_line = n(), #keep track of how many line segments
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    e_m = e_weighted_sum/sum_of_weights,
+    
+    #proportion of the pixels with missing data
+    n_line_prop_e_miss = n_line_miss/n_line,
+    
+    #if all of the lines are missing for that person (or person-time category),
+    #then this should be a binary e_miss variable, as with the home-based measure
+    e_miss = case_when(
+      n_line_prop_e_miss>0.95~1,
+      TRUE ~0),
+    e_not_miss = abs(e_miss-1)
+  ) %>% 
+  #lose this variable, because it may confuse: e_weighted_sum
+  dplyr::select(-starts_with("e_weighted_sum")) %>% 
+  #reorder for easier viewing
+  dplyr::select(
+    starts_with("study_id"), 
+    starts_with("e_name"),
+    starts_with("e_"),
+    starts_with("t_elap"), 
+    starts_with("sum_of"), #because it's non-missing version of t_elapsed_h 
+    everything()) 
+
+#traj_summary_s_id_demo %>% View()
