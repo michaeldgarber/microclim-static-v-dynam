@@ -257,6 +257,7 @@ traj_extract_e_demo=function(study_id_val){
                   contains("t_elapsed") , everything())
 }
 
+#Caution: this step takes ~5-15 mins
 traj_extract_wrangle_test_fun=traj_extract_e_demo(1)
 
 #check it out for one study ID
@@ -264,6 +265,7 @@ traj_extract_wrangle_test_fun
 summary(traj_extract_wrangle_test_fun$e)
 
 ### Run function over all study IDs-----
+#Caution: this step takes some time - about 10 mins on my Macbook Pro
 traj_extract_df_demo = study_id_list %>% 
   map_dfr(traj_extract_e_demo)
 
