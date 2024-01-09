@@ -29,3 +29,5 @@ lst_20230618=rast("MOD11A2.061_LST_Day_1km_doy2023161_aid0001.tif")
 lst_20230602 %>% mapview()
 lst_20230610 %>% mapview()
 lst_20230618 %>% mapview() #this is the best image
+
+#Examine this vs the trajectories
